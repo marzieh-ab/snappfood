@@ -25,7 +25,7 @@ function MenuHeader() {
        }}
      >
        {NavData.map((data) => {
-         console.log(data.img, "imgggg");
+       
          return (
          <Link  to={`/${data.href}`}>
            <MenuItem

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import {
   Box,
   Grid,
@@ -22,29 +22,58 @@ import darya from "../../public/images/catresturantdarya.jpg";
 import melal from "../../public/images/catreaturanmelal.jpg";
 import SwitchCustom from "../components/SwitchCustom";
 import MenuHeader from "../components/MenuHeader";
-import { resturantData } from "../../public/Data/ResturantData";
 import CardItemNew from "../components/CardItemNew";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { useSelector, useDispatch } from "react-redux";
+import { store } from "./../store";
+import { toggleSwitch } from "./../features/switchSlice";
 
 function Restaurant() {
   const [state, setState] = useState(1);
-  // const [isSticky, setIsSticky] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [resturantData, setResturantData] = useState([]);
+  const [items, setItems] = useState(resturantData.slice(0, 10));
 
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     const offset = window.pageYOffset;
-  //     setIsSticky(offset >= 5 && offset < window.innerHeight - 34); // Check if scrolled between 5rem and -34rem from the bottom
-  //   };
+  const dispatch = useDispatch();
+  const switches = useSelector((state) => state.switches);
+  console.log(switches, "switchhhhh");
 
-  //   window.addEventListener("scroll", handleScroll);
-
-  //   return () => {
-  //     window.removeEventListener("scroll", handleScroll);
-  //   };
-  // }, []);
+  useEffect(() => {
+    fetch("/Data/resturants.json")
+      .then((res) => res.json())
+      .then((json) => {
+        // console.log(json, "json");
+        setResturantData(json);
+      });
+  }, []);
 
   const handleStateChange = (newState: any) => {
     setState(newState);
   };
+
+  const fetchMoreData = () => {
+    // Simulating fetching more data
+    setTimeout(() => {
+      setItems((prevItems) => [
+        ...prevItems,
+        ...resturantData.slice(prevItems.length, prevItems.length + 10),
+      ]);
+    }, 1500);
+  };
+
+  const haneleFilterChange =
+    (name: string) => (event: ChangeEvent<HTMLInputElement>) => {
+      console.log(name);
+      dispatch(toggleSwitch(name));
+    };
+  // const handleSwitchToggle = (name: string) => {
+  //   console.log(  name, "nameeeee");
+  //   //  dispatch(toggleSwitch(name));
+  // };
+  // const handleSwitchToggle = (switchName:any) => {
+  //   dispatch(toggleSwitch(switchName));
+  // };
+
   return (
     <>
       <Header placeholder="رستوران" />
@@ -468,7 +497,11 @@ function Restaurant() {
                 <Box
                   sx={{
                     borderBottom: "1px solid rgba(58, 61, 66, 0.06) ",
+                    display: "flex",
+                    justifyContent: "space-between",
+
                     minHeight: "3.4375rem",
+                    alignItems: "center",
                   }}
                 >
                   <Typography
@@ -480,6 +513,8 @@ function Restaurant() {
                   >
                     پیک اسنپ فود
                   </Typography>
+
+                  <SwitchCustom onChange={haneleFilterChange("is_express")} />
                 </Box>
 
                 <Box
@@ -501,29 +536,10 @@ function Restaurant() {
                   >
                     داری کوپن
                   </Typography>
-                  <SwitchCustom />
-                </Box>
-                <Box
-                  sx={{
-                    borderBottom: "1px solid rgba(58, 61, 66, 0.06) ",
-                    display: "flex",
-                    justifyContent: "space-between",
 
-                    minHeight: "3.4375rem",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "400",
-                      fontSize: "0.875rem",
-                      color: "rgb(58, 61, 66)",
-                    }}
-                  >
-                    دارای تخفیف
-                  </Typography>
-                  <SwitchCustom />
+                  <SwitchCustom onChange={haneleFilterChange("has_coupon")} />
                 </Box>
+
                 <Box
                   sx={{
                     borderBottom: "1px solid rgba(58, 61, 66, 0.06) ",
@@ -543,7 +559,7 @@ function Restaurant() {
                   >
                     فودپرو
                   </Typography>
-                  <SwitchCustom />
+                  <SwitchCustom onChange={haneleFilterChange("is_pro")} />
                 </Box>
                 <Box
                   sx={{
@@ -564,7 +580,9 @@ function Restaurant() {
                   >
                     به صرفه
                   </Typography>
-                  <SwitchCustom />
+                  <SwitchCustom
+                    onChange={haneleFilterChange("is_economical")}
+                  />
                 </Box>
                 <Box
                   sx={{
@@ -584,23 +602,26 @@ function Restaurant() {
                   >
                     خوش قیمت
                   </Typography>
-                  <SwitchCustom />
+                  <SwitchCustom onChange={haneleFilterChange("is_eco")} />
                 </Box>
               </Box>
             </aside>
           </Grid>
           <Grid item xs={9}>
-            <Grid
-              container
-              spacing={2}
-              sx={{ width: "calc(100% + 1.5rem)",  }}
+            <InfiniteScroll
+              dataLength={items.length}
+              next={fetchMoreData}
+              hasMore={hasMore}
+              loader={null}
             >
-              {resturantData.map((resData: any) => (
-                <Grid item key={resData.data.id} xs={4}>
-                  <CardItemNew resData={resData} />
-                </Grid>
-              ))}
-            </Grid>
+              <Grid container spacing={2} sx={{ width: "calc(100% + 1.5rem)" }}>
+                {items.map((resData: any) => (
+                  <Grid item key={resData.data.id} xs={4}>
+                    <CardItemNew resData={resData} />
+                  </Grid>
+                ))}
+              </Grid>
+            </InfiniteScroll>
           </Grid>
         </Grid>
       </Box>
